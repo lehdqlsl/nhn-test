@@ -16,8 +16,6 @@ public class HttpServer {
     private final ServerConfig serverConfig;
     private final int NUM_THREADS = 50;
     private final String INDEX_FILE = "index.html";
-    private final File rootDirectory = new File("");
-    private final int port = 8000;
 
     public HttpServer(ServerConfig serverConfig) {
         this.serverConfig = serverConfig;
@@ -25,18 +23,18 @@ public class HttpServer {
 
     public void start() throws IOException {
         ExecutorService pool = Executors.newFixedThreadPool(NUM_THREADS);
-        try (ServerSocket server = new ServerSocket(port)) {
+        try (ServerSocket server = new ServerSocket(serverConfig.getServerPort())) {
             process(pool, server);
         }
     }
 
     private void process(ExecutorService pool, ServerSocket server) {
         logger.info("Accepting connections on port " + server.getLocalPort());
-        logger.info("Document Root: " + rootDirectory);
+        logger.info("Document Root: " + serverConfig.rootDirectory());
         while (true) {
             try {
                 Socket request = server.accept();
-                Runnable r = new RequestProcessor(rootDirectory, INDEX_FILE, request);
+                Runnable r = new RequestProcessor(serverConfig.rootDirectory(), INDEX_FILE, request);
                 pool.submit(r);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Error accepting connection", ex);
