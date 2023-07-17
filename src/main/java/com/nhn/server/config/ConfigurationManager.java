@@ -12,10 +12,7 @@ public class ConfigurationManager {
         InputStream config = ConfigurationManager.class.getClassLoader().getResourceAsStream("config.json");
         try {
             ServerConfigWrapper serverConfigWrapper = mapper.readValue(config, ServerConfigWrapper.class);
-            return new ServerConfig(
-                    new ServerPort(serverConfigWrapper.getPort()),
-                    serverConfigWrapper.getDocRoot()
-            );
+            return new ServerConfig(serverConfigWrapper);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
