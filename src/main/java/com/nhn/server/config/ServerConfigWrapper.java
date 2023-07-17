@@ -1,11 +1,17 @@
 package com.nhn.server.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.HashMap;
+import java.util.Map;
+
 class ServerConfigWrapper {
+    public static final String PAGES = "pages/";
     private int port = 8080;
     private String docRoot = "/";
-    private String _403 = "403.html";
-    private String _404 = "404.html";
-    private String _500 = "500.html";
+
+    @JsonProperty("error_page")
+    private Map<String, String> errorPage = new HashMap<>();
 
     public ServerConfigWrapper() {
     }
@@ -18,15 +24,7 @@ class ServerConfigWrapper {
         return docRoot;
     }
 
-    public String get_403() {
-        return _403;
-    }
-
-    public String get_404() {
-        return _404;
-    }
-
-    public String get_500() {
-        return _500;
+    public Map<String, String> getErrorPage() {
+        return errorPage;
     }
 }
