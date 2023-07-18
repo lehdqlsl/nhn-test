@@ -13,32 +13,33 @@ public class RequestProcessor implements Runnable {
     private final Socket connection;
     private final OutputStream raw;
     private final Writer out;
-    private final Reader reader;
+    private final BufferedReader bufferedReader;
+    private final HttpRequestParser httpRequestParser;
 
     public RequestProcessor(String rootDirectory, String indexFileName, Socket connection) throws IOException {
         this.rootDirectory = rootDirectory;
         this.indexFileName = indexFileName;
         this.connection = connection;
 
+        this.httpRequestParser = new HttpRequestParser(connection.getInputStream());
         this.raw = new BufferedOutputStream(connection.getOutputStream());
         this.out = new OutputStreamWriter(raw);
-        this.reader = new InputStreamReader(new BufferedInputStream(connection.getInputStream()), "UTF-8");
+        this.bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
     }
 
     @Override
     public void run() {
         try {
-            Headers headers = readRequestLine(reader);
+            HttpRequest httpRequest = httpRequestParser.parse();
+            logger.info(connection.getRemoteSocketAddress() + " " + httpRequest.info());
+            logger.info(connection.getInetAddress().getHostAddress() + " " + httpRequest.info());
 
-            logger.info(connection.getRemoteSocketAddress() + " " + headers);
-            logger.info(connection.getInetAddress().getHostAddress() + " " + headers);
-
-            if (headers.isRootPath()) {
-                headers.appendPath(indexFileName);
+            if (httpRequest.isRootPath()) {
+                httpRequest.appendPath(indexFileName);
             }
 
-            if (headers.isGetMethod()) {
-                handleGetRequest(headers);
+            if (httpRequest.isGetMethod()) {
+                handleGetRequest(httpRequest);
             } else {
                 handleNonGetRequest("");
             }
@@ -50,28 +51,17 @@ public class RequestProcessor implements Runnable {
         }
     }
 
-    private Headers readRequestLine(Reader in) throws IOException {
-        StringBuilder requestLine = new StringBuilder();
-        int c;
-        while ((c = in.read()) != -1) {
-            if (c == '\r' || c == '\n')
-                break;
-            requestLine.append((char) c);
-        }
-        return new Headers(requestLine.toString());
-    }
-
-    private void handleGetRequest(Headers headers) throws IOException {
-        InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(rootDirectory + headers.getFileName());
+    private void handleGetRequest(HttpRequest httpRequest) throws IOException {
+        InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(rootDirectory + httpRequest.uri());
 
         if (resourceAsStream == null) {
-            handleFileNotFound(headers.version());
+            handleFileNotFound(httpRequest.version());
             return;
         }
 
         byte[] theData = resourceAsStream.readAllBytes();
-        if (headers.isHttp()) {
-            sendHeader("HTTP/1.0 200 OK", headers.contentType(), theData.length);
+        if (httpRequest.isHttp()) {
+            sendHeader("HTTP/1.0 200 OK", httpRequest.contentType(), theData.length);
         }
         sendFile(theData);
     }
