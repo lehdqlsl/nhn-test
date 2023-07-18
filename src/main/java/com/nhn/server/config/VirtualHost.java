@@ -1,5 +1,6 @@
 package com.nhn.server.config;
 
+import java.io.File;
 import java.util.Map;
 
 public class VirtualHost {
@@ -19,5 +20,13 @@ public class VirtualHost {
 
     public Map<String, String> getErrorPages() {
         return errorPages;
+    }
+
+    public boolean isRootFolder() {
+        return !(new File(docRoot).isFile());
+    }
+
+    public boolean containHost(String host) {
+        return name.contains(host);
     }
 }

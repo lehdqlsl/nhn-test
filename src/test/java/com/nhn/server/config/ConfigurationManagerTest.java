@@ -2,23 +2,18 @@ package com.nhn.server.config;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 
 
 public class ConfigurationManagerTest {
 
     @Test
-    void read_config_file() {
-        assertThatCode(() -> ConfigurationManager.getServerConfig())
-                .doesNotThrowAnyException();
-    }
+    void invalid_port() {
+        ServerConfigWrapper wrapper = new ServerConfigWrapper(-5, "ROOT", new ArrayList<>());
 
-    @Test
-    void mapping_object() {
-        ServerConfig serverConfig = ConfigurationManager.getServerConfig();
-
-        assertThat(serverConfig.getDocRoot()).isNotNull();
-        assertThat(serverConfig.port()).isEqualTo(8000);
+        ServerConfig serverConfig = new ServerConfig(wrapper);
+        assertThat(serverConfig.port()).isEqualTo(8080);
     }
 }

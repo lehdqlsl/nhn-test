@@ -1,7 +1,6 @@
 package com.nhn.server.config;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,30 +8,35 @@ import java.util.logging.Logger;
 
 public class ServerConfig {
     private static final Logger logger = Logger.getLogger(ServerConfig.class.getCanonicalName());
-    public static final String PREFIX = "webapps/";
     private int port;
     private String docRoot;
-    private final Map<String, String> errorPages = new HashMap<>();
+    private Map<String, String> errorPages = new HashMap<>();
     private List<VirtualHost> virtualHosts;
 
-    public ServerConfig(ServerConfigWrapper serverConfigWrapper) throws IOException {
+    public ServerConfig(ServerConfigWrapper serverConfigWrapper) {
         setDocRoot(serverConfigWrapper.getDocRoot());
         setServerPort(serverConfigWrapper.getPort());
         setVirtualHosts(serverConfigWrapper.getVirtualHosts());
-        //setErrorPages(serverConfigWrapper.getErrorPage());
+        setErrorPages();
     }
 
     private void setVirtualHosts(List<VirtualHost> virtualHosts) {
+        virtualHosts.forEach(virtualHost -> {
+            if (!virtualHost.isRootFolder()) {
+                throw new IllegalArgumentException(
+                        "rootDirectory must be a directory, not a file");
+            }
+        });
         this.virtualHosts = virtualHosts;
     }
 
-    private void setErrorPages(Map<String, String> errorPages) {
-        this.errorPages.put("403", "pages/403.html");
-        this.errorPages.put("404", "pages/404.html");
-        this.errorPages.put("500", "pages/500.html");
-        this.errorPages.put("501", "pages/501.html");
-
-        this.errorPages.putAll(errorPages);
+    private void setErrorPages() {
+        this.errorPages.put("403", "/403.html");
+        this.errorPages.put("404", "/404.html");
+        this.errorPages.put("500", "/500.html");
+        this.errorPages.put("501", "/501.html");
+//
+//        this.errorPages.putAll(errorPages);
     }
 
     private void setDocRoot(String docRoot) {
@@ -55,7 +59,15 @@ public class ServerConfig {
         return port < 0 || port > 65535;
     }
 
-    public String getDocRoot() {
+    public String rootDirectory(String host) {
+        return virtualHosts.stream()
+                .filter(virtualHost -> virtualHost.containHost(host))
+                .map(VirtualHost::getDocRoot)
+                .findFirst()
+                .orElse(docRoot);
+    }
+
+    public String rootDirectory() {
         return docRoot;
     }
 
@@ -63,11 +75,23 @@ public class ServerConfig {
         return port;
     }
 
-    public String rootDirectory() {
-        return PREFIX + docRoot;
-    }
-
     public List<VirtualHost> virtualHosts() {
         return virtualHosts;
+    }
+
+    public int numberOfThread() {
+        return 50;
+    }
+
+    public String index() {
+        return "index.html";
+    }
+
+    public String forbidden() {
+        return rootDirectory() + errorPages.get("403");
+    }
+
+    public String forbidden(String host) {
+        return rootDirectory(host) + errorPages.get("403");
     }
 }

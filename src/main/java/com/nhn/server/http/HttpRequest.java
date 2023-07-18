@@ -7,13 +7,13 @@ import java.util.Map;
 public class HttpRequest {
     private final Map<String, String> headers = new HashMap<>();
     private final String method;
-    private String uri;
+    private RequestUri uri;
     private final String version;
 
     HttpRequest(String startLine) {
         String[] parts = startLine.split(" ");
         this.method = parts[0];
-        this.uri = parts[1];
+        this.uri = new RequestUri(parts[1]);
         this.version = parts[2];
     }
 
@@ -26,7 +26,7 @@ public class HttpRequest {
     }
 
     public String uri() {
-        return uri;
+        return uri.value();
     }
 
     public String version() {
@@ -50,7 +50,7 @@ public class HttpRequest {
     }
 
     public void appendPath(String indexFileName) {
-        uri += indexFileName;
+        uri.append(indexFileName);
     }
 
     public boolean isHttp() {
@@ -58,6 +58,6 @@ public class HttpRequest {
     }
 
     public String contentType() {
-        return URLConnection.getFileNameMap().getContentTypeFor(uri);
+        return URLConnection.getFileNameMap().getContentTypeFor(uri.value());
     }
 }

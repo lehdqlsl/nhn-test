@@ -1,12 +1,17 @@
 package com.nhn.server.config;
 
 import java.util.List;
-import java.util.Map;
 
 class ServerConfigWrapper {
     private int port = 8080;
-    private String docRoot = "ROOT";
+    private String docRoot = "webapps/ROOT";
     private List<VirtualHost> virtualHosts;
+
+    ServerConfigWrapper(int port, String docRoot, List<VirtualHost> virtualHosts) {
+        this.port = port;
+        this.docRoot = docRoot;
+        this.virtualHosts = virtualHosts;
+    }
 
     ServerConfigWrapper() {
     }

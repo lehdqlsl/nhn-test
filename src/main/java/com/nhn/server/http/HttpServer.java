@@ -13,15 +13,13 @@ import java.util.logging.Logger;
 public class HttpServer {
     private static final Logger logger = Logger.getLogger(HttpServer.class.getCanonicalName());
     private final ServerConfig serverConfig;
-    private final int NUM_THREADS = 50;
-    private final String INDEX_FILE = "index.html";
 
     public HttpServer(ServerConfig serverConfig) {
         this.serverConfig = serverConfig;
     }
 
     public void start() throws IOException {
-        ExecutorService pool = Executors.newFixedThreadPool(NUM_THREADS);
+        ExecutorService pool = Executors.newFixedThreadPool(serverConfig.numberOfThread());
         try (ServerSocket server = new ServerSocket(serverConfig.port())) {
             process(pool, server);
         }
@@ -33,10 +31,7 @@ public class HttpServer {
         while (true) {
             try {
                 Socket request = server.accept();
-                Runnable r = new RequestProcessor(
-                        serverConfig.rootDirectory(),
-                        INDEX_FILE,
-                        request);
+                Runnable r = new RequestProcessor(serverConfig, request);
                 pool.submit(r);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Error accepting connection", ex);

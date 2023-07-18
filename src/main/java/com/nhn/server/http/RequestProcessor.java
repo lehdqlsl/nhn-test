@@ -1,5 +1,8 @@
 package com.nhn.server.http;
 
+import com.nhn.server.config.ServerConfig;
+import com.nhn.server.exception.ForbiddenException;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.Date;
@@ -8,51 +11,67 @@ import java.util.logging.Logger;
 
 public class RequestProcessor implements Runnable {
     private final static Logger logger = Logger.getLogger(RequestProcessor.class.getCanonicalName());
-    private final String rootDirectory;
-    private final String indexFileName;
     private final Socket connection;
     private final OutputStream raw;
     private final Writer out;
-    private final BufferedReader bufferedReader;
     private final HttpRequestParser httpRequestParser;
+    private final ServerConfig serverConfig;
 
-    public RequestProcessor(String rootDirectory, String indexFileName, Socket connection) throws IOException {
-        this.rootDirectory = rootDirectory;
-        this.indexFileName = indexFileName;
+    public RequestProcessor(ServerConfig serverConfig, Socket connection) throws IOException {
+        this.serverConfig = serverConfig;
         this.connection = connection;
 
         this.httpRequestParser = new HttpRequestParser(connection.getInputStream());
         this.raw = new BufferedOutputStream(connection.getOutputStream());
         this.out = new OutputStreamWriter(raw);
-        this.bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
     }
 
     @Override
     public void run() {
+        HttpRequest httpRequest = httpRequestParser.parse();
         try {
-            HttpRequest httpRequest = httpRequestParser.parse();
             logger.info(connection.getRemoteSocketAddress() + " " + httpRequest.info());
             logger.info(connection.getInetAddress().getHostAddress() + " " + httpRequest.info());
 
             if (httpRequest.isRootPath()) {
-                httpRequest.appendPath(indexFileName);
+                httpRequest.appendPath(serverConfig.index());
             }
 
             if (httpRequest.isGetMethod()) {
                 handleGetRequest(httpRequest);
             } else {
-                handleNonGetRequest("");
+                handleNonGetRequest(httpRequest.version());
             }
         } catch (IOException ex) {
             ex.printStackTrace();
             handleIOException(connection, ex);
+        } catch (ForbiddenException e) {
+            handleForbidden(httpRequest);
         } finally {
             closeConnection(connection);
         }
     }
 
+    private void handleForbidden(HttpRequest httpRequest) {
+        try {
+
+            InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(serverConfig.forbidden());
+
+            byte[] theData = resourceAsStream.readAllBytes();
+
+            if (httpRequest.isHttp()) {
+                sendHeader("HTTP/1.0 403 Forbidden", "text/html; charset=utf-8", theData.length);
+            }
+
+            raw.write(theData);
+            raw.flush();
+        } catch (IOException e) {
+
+        }
+    }
+
     private void handleGetRequest(HttpRequest httpRequest) throws IOException {
-        InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(rootDirectory + httpRequest.uri());
+        InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(serverConfig.rootDirectory() + httpRequest.uri());
 
         if (resourceAsStream == null) {
             handleFileNotFound(httpRequest.version());

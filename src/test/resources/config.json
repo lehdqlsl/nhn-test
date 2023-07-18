@@ -3,7 +3,7 @@
   "virtualHosts": [
     {
       "name": "example.com",
-      "docRoot": "webapps/example.com",
+      "docRoot": "webapps/example",
       "errorPages": {
         "404": "/404.html"
       }
