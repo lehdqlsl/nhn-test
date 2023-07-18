@@ -19,10 +19,6 @@ public class RequestUri {
         }
     }
 
-    private void checkExtensionSecurity(String uri) {
-
-    }
-
     public String value() {
         return uri;
     }

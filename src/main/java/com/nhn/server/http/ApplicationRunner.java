@@ -1,11 +1,9 @@
-package com.nhn.server;
+package com.nhn.server.http;
 
 
 import com.nhn.server.config.ConfigurationManager;
 import com.nhn.server.config.ServerConfig;
-import com.nhn.server.http.HttpServer;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,16 +13,6 @@ import java.util.logging.Logger;
  */
 public class ApplicationRunner {
     private static final Logger logger = Logger.getLogger(ApplicationRunner.class.getCanonicalName());
-
-
-    public ApplicationRunner(File rootDirectory, int port) throws IOException {
-        if (!rootDirectory.isDirectory()) {
-            throw new IOException(rootDirectory
-                    + " does not exist as a directory");
-        }
-//        this.rootDirectory = rootDirectory;
-//        this.port = port;
-    }
 
     public static void run(Class<?> primarySource, String[] args) {
         ServerConfig serverConfig = ConfigurationManager.getServerConfig();
