@@ -19,6 +19,6 @@ public class ConfigurationManagerTest {
         ServerConfig serverConfig = ConfigurationManager.getServerConfig();
 
         assertThat(serverConfig.getDocRoot()).isNotNull();
-        assertThat(serverConfig.getServerPort()).isEqualTo(8000);
+        assertThat(serverConfig.port()).isEqualTo(8000);
     }
 }

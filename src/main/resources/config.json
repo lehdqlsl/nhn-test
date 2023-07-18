@@ -1,6 +1,12 @@
 {
   "port" : 8080,
-  "error_page" : {
-    "404": "/404.html"
-  }
+  "virtualHosts": [
+    {
+      "serverName": "example.com",
+      "documentRoot": "webapps/example.com",
+      "errorPages": {
+        "404": "/404.html"
+      }
+    }
+  ]
 }

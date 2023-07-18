@@ -50,7 +50,7 @@ public class HttpRequest {
     }
 
     public void appendPath(String indexFileName) {
-        uri += "index.html";
+        uri += indexFileName;
     }
 
     public boolean isHttp() {

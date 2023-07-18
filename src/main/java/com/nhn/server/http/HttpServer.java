@@ -2,7 +2,6 @@ package com.nhn.server.http;
 
 import com.nhn.server.config.ServerConfig;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -23,7 +22,7 @@ public class HttpServer {
 
     public void start() throws IOException {
         ExecutorService pool = Executors.newFixedThreadPool(NUM_THREADS);
-        try (ServerSocket server = new ServerSocket(serverConfig.getServerPort())) {
+        try (ServerSocket server = new ServerSocket(serverConfig.port())) {
             process(pool, server);
         }
     }

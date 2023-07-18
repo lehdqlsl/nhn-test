@@ -3,20 +3,27 @@ package com.nhn.server.config;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
 public class ServerConfig {
     private static final Logger logger = Logger.getLogger(ServerConfig.class.getCanonicalName());
-    public static final String PREFIX = "static";
+    public static final String PREFIX = "webapps/";
     private int port;
     private String docRoot;
     private final Map<String, String> errorPages = new HashMap<>();
+    private List<VirtualHost> virtualHosts;
 
     public ServerConfig(ServerConfigWrapper serverConfigWrapper) throws IOException {
         setDocRoot(serverConfigWrapper.getDocRoot());
         setServerPort(serverConfigWrapper.getPort());
-        setErrorPages(serverConfigWrapper.getErrorPage());
+        setVirtualHosts(serverConfigWrapper.getVirtualHosts());
+        //setErrorPages(serverConfigWrapper.getErrorPage());
+    }
+
+    private void setVirtualHosts(List<VirtualHost> virtualHosts) {
+        this.virtualHosts = virtualHosts;
     }
 
     private void setErrorPages(Map<String, String> errorPages) {
@@ -52,11 +59,15 @@ public class ServerConfig {
         return docRoot;
     }
 
-    public int getServerPort() {
+    public int port() {
         return port;
     }
 
     public String rootDirectory() {
         return PREFIX + docRoot;
+    }
+
+    public List<VirtualHost> virtualHosts() {
+        return virtualHosts;
     }
 }
