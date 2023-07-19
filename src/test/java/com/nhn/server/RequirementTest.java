@@ -18,7 +18,7 @@ public class RequirementTest {
 
     @Test
     void parse_host_header() {
-        InputStream inputStream = ConfigurationManager.class.getClassLoader().getResourceAsStream("headers.txt");
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("headers.txt");
         HttpRequestParser httpRequestParser = new HttpRequestParser(inputStream);
         HttpRequest parse = httpRequestParser.parse();
 
