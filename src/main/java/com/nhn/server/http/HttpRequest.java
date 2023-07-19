@@ -45,10 +45,6 @@ public class HttpRequest implements HttpServletRequest {
         return method + " " + uri + " " + version;
     }
 
-    public boolean isRootPath() {
-        return uri.isRoot();
-    }
-
     public boolean isGetMethod() {
         return method.equals("GET");
     }

@@ -34,6 +34,7 @@ public class RequestProcessor implements Runnable {
             logger.info(connection.getRemoteSocketAddress() + " " + request.info());
             logger.info(connection.getInetAddress().getHostAddress() + " " + request.info());
 
+            // request method 구현 여부는 servlet에서 처리
             if (!request.isGetMethod()) {
                 throw new NotImplementedException();
             }
@@ -42,11 +43,9 @@ public class RequestProcessor implements Runnable {
             if (servletConfig.isServlet(request.getUri())) {
                 servlet = servletConfig.getServlet(request.getUri());
             } else {
-                if (request.isRootPath()) {
-                    request.appendPath(servletConfig.index());
-                }
                 servlet = new DefaultServlet();
             }
+
             servlet.init(servletConfig);
             servlet.service(request, response);
         } catch (ForbiddenException e) {

@@ -7,10 +7,17 @@ public class RequestUri {
 
     public RequestUri(String uri) {
         checkExtension(uri);
+        if (isRoot(uri)) {
+            uri += "index.html";
+        }
         this.uri = uri;
     }
 
-    private static void checkExtension(String uri) {
+    private boolean isRoot(String uri) {
+        return uri.equals("/");
+    }
+
+    private void checkExtension(String uri) {
         String[] split = uri.split("\\.");
         String extension = split.length > 1 ? split[1] : null;
 
@@ -32,7 +39,7 @@ public class RequestUri {
         return uri;
     }
 
-    public boolean isRoot() {
-        return uri.equals("/");
+    private boolean isRoot() {
+        return isRoot(uri);
     }
 }
