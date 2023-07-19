@@ -1,7 +1,7 @@
 package com.nhn.server;
 
 import com.nhn.server.config.ConfigurationManager;
-import com.nhn.server.config.ServerConfig;
+import com.nhn.server.config.ServletConfig;
 import com.nhn.server.exception.ForbiddenException;
 import com.nhn.server.http.HttpRequest;
 import com.nhn.server.http.HttpRequestParser;
@@ -23,19 +23,19 @@ public class RequirementTest {
         HttpRequest parse = httpRequestParser.parse();
 
         assertThat(parse.method()).isEqualTo("GET");
-        assertThat(parse.uri()).isEqualTo("/");
+        assertThat(parse.getUri()).isEqualTo("/");
         assertThat(parse.version()).isEqualTo("HTTP/1.1");
         assertThat(parse.host()).isEqualTo("localhost:8080");
     }
 
     @Test
     void configuration_file() {
-        ServerConfig serverConfig = ConfigurationManager.getServerConfig();
+        ServletConfig servletConfig = ConfigurationManager.getServerConfig();
 
-        Assertions.assertThat(serverConfig.rootDirectory()).isEqualTo("webapps/ROOT");
-        Assertions.assertThat(serverConfig.port()).isEqualTo(8000);
-        Assertions.assertThat(serverConfig.virtualHosts()).isNotNull();
-        Assertions.assertThat(serverConfig.virtualHosts()).hasSize(1);
+        Assertions.assertThat(servletConfig.rootDirectory()).isEqualTo("webapps/ROOT");
+        Assertions.assertThat(servletConfig.port()).isEqualTo(8000);
+        Assertions.assertThat(servletConfig.virtualHosts()).isNotNull();
+        Assertions.assertThat(servletConfig.virtualHosts()).hasSize(1);
     }
 
     @Test
@@ -50,18 +50,18 @@ public class RequirementTest {
 
     @Test
     void http_error_403() {
-        ServerConfig serverConfig = ConfigurationManager.getServerConfig();
+        ServletConfig servletConfig = ConfigurationManager.getServerConfig();
 
-        String forbidden = serverConfig.forbidden();
+        String forbidden = servletConfig.forbidden();
 
         assertThat(forbidden).isEqualTo("webapps/ROOT/403.html");
     }
 
     @Test
     void http_error_403_with_virtualhost() {
-        ServerConfig serverConfig = ConfigurationManager.getServerConfig();
+        ServletConfig servletConfig = ConfigurationManager.getServerConfig();
 
-        String forbidden = serverConfig.forbidden("example.com");
+        String forbidden = servletConfig.forbidden("example.com");
 
         assertThat(forbidden).isEqualTo("webapps/example/403.html");
     }

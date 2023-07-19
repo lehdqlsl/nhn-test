@@ -13,7 +13,7 @@ public class ConfigurationManagerTest {
     void invalid_port() {
         ServerConfigWrapper wrapper = new ServerConfigWrapper(-5, "ROOT", new ArrayList<>());
 
-        ServerConfig serverConfig = new ServerConfig(wrapper);
-        assertThat(serverConfig.port()).isEqualTo(8080);
+        ServletConfig servletConfig = new ServletConfig(wrapper, new ArrayList<>());
+        assertThat(servletConfig.port()).isEqualTo(8080);
     }
 }

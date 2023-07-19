@@ -27,7 +27,8 @@ public class HttpRequest implements HttpServletRequest {
         return method;
     }
 
-    public String uri() {
+    @Override
+    public String getUri() {
         return uri.value();
     }
 
@@ -35,6 +36,7 @@ public class HttpRequest implements HttpServletRequest {
         return version;
     }
 
+    @Override
     public String host() {
         return headers.get("host");
     }
@@ -59,7 +61,13 @@ public class HttpRequest implements HttpServletRequest {
         return version.startsWith("HTTP/");
     }
 
+    @Override
     public String contentType() {
         return URLConnection.getFileNameMap().getContentTypeFor(uri.value());
+    }
+
+    @Override
+    public String getPathInfo() {
+        return null;
     }
 }

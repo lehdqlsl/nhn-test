@@ -17,14 +17,19 @@ public class HttpResponse implements HttpServletResponse {
         }
     }
 
-    void setHeader(String responseCode, String contentType, int length)
-            throws IOException {
-        out.write(responseCode + "\r\n");
-        out.write("Date: " + new Date() + "\r\n");
-        out.write("Server: HTTP 2.0\r\n");
-        out.write("Content-length: " + length + "\r\n");
-        out.write("Content-type: " + contentType + "\r\n\r\n");
-        out.flush();
+
+    @Override
+    public void setHeader(String responseCode, String contentType, int length) {
+        try {
+            out.write(responseCode + "\r\n");
+            out.write("Date: " + new Date() + "\r\n");
+            out.write("Server: HTTP 2.0\r\n");
+            out.write("Content-length: " + length + "\r\n");
+            out.write("Content-type: " + contentType + "\r\n\r\n");
+            out.flush();
+        } catch (IOException e) {
+
+        }
     }
 
     @Override
@@ -44,5 +49,10 @@ public class HttpResponse implements HttpServletResponse {
         } catch (IOException e) {
 
         }
+    }
+
+    @Override
+    public PrintWriter getWriter() {
+        return new PrintWriter(out);
     }
 }

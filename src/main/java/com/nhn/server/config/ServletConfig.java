@@ -1,23 +1,33 @@
 package com.nhn.server.config;
 
+import com.nhn.server.servlet.ServletMapping;
+import com.nhn.server.servlet.SimpleServlet;
+
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-public class ServerConfig {
-    private static final Logger logger = Logger.getLogger(ServerConfig.class.getCanonicalName());
+public class ServletConfig {
+    private static final Logger logger = Logger.getLogger(ServletConfig.class.getCanonicalName());
+    private List<ServletMapping> servletMappings;
     private int port;
     private String docRoot;
     private Map<String, String> errorPages = new HashMap<>();
     private List<VirtualHost> virtualHosts;
 
-    public ServerConfig(ServerConfigWrapper serverConfigWrapper) {
+    public ServletConfig(ServerConfigWrapper serverConfigWrapper, List<ServletMapping> servletMappings) {
         setDocRoot(serverConfigWrapper.getDocRoot());
         setServerPort(serverConfigWrapper.getPort());
         setVirtualHosts(serverConfigWrapper.getVirtualHosts());
+        setServletMapping(servletMappings);
         setErrorPages();
+    }
+
+    private void setServletMapping(List<ServletMapping> servletMappings) {
+        this.servletMappings = servletMappings;
     }
 
     private void setVirtualHosts(List<VirtualHost> virtualHosts) {
@@ -65,6 +75,30 @@ public class ServerConfig {
                 .map(VirtualHost::getDocRoot)
                 .findFirst()
                 .orElse(docRoot);
+    }
+
+    public boolean isServlet(String uri) {
+        return servletMappings.stream()
+                .anyMatch(servletMapping -> servletMapping.isMapping(uri));
+    }
+
+    private String getServletName(String uri) {
+        return servletMappings.stream()
+                .filter(servletMapping -> servletMapping.isMapping(uri))
+                .map(ServletMapping::getServletClass)
+                .findFirst()
+                .orElse(null);
+    }
+
+    public SimpleServlet getServlet(String uri) {
+        String servletName = getServletName(uri);
+        try {
+            Class<?> servlet = getClass().getClassLoader().loadClass(servletName);
+            return (SimpleServlet) servlet.getDeclaredConstructor().newInstance();
+        } catch (ClassNotFoundException | InvocationTargetException | InstantiationException | IllegalAccessException |
+                 NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String rootDirectory() {
