@@ -1,6 +1,6 @@
 [
   {
-    "urlPattern": "/hello",
-    "servletClass": "com.nhn.server.servlet.HelloServlet"
+    "urlPattern": "/sample",
+    "servletClass": "com.nhn.server.sample.SampleServlet"
   }
 ]

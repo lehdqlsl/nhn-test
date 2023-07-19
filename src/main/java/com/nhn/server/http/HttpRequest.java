@@ -60,14 +60,4 @@ public class HttpRequest implements HttpServletRequest {
     public boolean isHttp() {
         return version.startsWith("HTTP/");
     }
-
-    @Override
-    public String contentType() {
-        return URLConnection.getFileNameMap().getContentTypeFor(uri.value());
-    }
-
-    @Override
-    public String getPathInfo() {
-        return null;
-    }
 }
