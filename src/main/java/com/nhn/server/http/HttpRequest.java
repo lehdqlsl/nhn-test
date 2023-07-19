@@ -1,13 +1,15 @@
 package com.nhn.server.http;
 
+import com.nhn.server.servlet.HttpServletRequest;
+
 import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class HttpRequest {
+public class HttpRequest implements HttpServletRequest {
     private final Map<String, String> headers = new HashMap<>();
     private final String method;
-    private RequestUri uri;
+    private final RequestUri uri;
     private final String version;
 
     HttpRequest(String startLine) {
@@ -42,7 +44,7 @@ public class HttpRequest {
     }
 
     public boolean isRootPath() {
-        return uri.equals("/");
+        return uri.isRoot();
     }
 
     public boolean isGetMethod() {

@@ -2,10 +2,16 @@ package com.nhn.server.http;
 
 import com.nhn.server.config.ServerConfig;
 import com.nhn.server.exception.ForbiddenException;
+import com.nhn.server.exception.NotFoundException;
+import com.nhn.server.exception.NotImplementedException;
+import com.nhn.server.servlet.ServletConfig;
+import com.nhn.server.servlet.SimpleServlet;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
-import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -13,74 +19,72 @@ public class RequestProcessor implements Runnable {
     private final static Logger logger = Logger.getLogger(RequestProcessor.class.getCanonicalName());
     private final Socket connection;
     private final OutputStream raw;
-    private final Writer out;
     private final HttpRequestParser httpRequestParser;
     private final ServerConfig serverConfig;
+    private final ServletConfig servletConfig;
+    private HttpRequest request;
+    private HttpResponse response;
 
-    public RequestProcessor(ServerConfig serverConfig, Socket connection) throws IOException {
+    public RequestProcessor(ServerConfig serverConfig, ServletConfig servletConfig, Socket connection) throws IOException {
         this.serverConfig = serverConfig;
+        this.servletConfig = servletConfig;
         this.connection = connection;
 
         this.httpRequestParser = new HttpRequestParser(connection.getInputStream());
         this.raw = new BufferedOutputStream(connection.getOutputStream());
-        this.out = new OutputStreamWriter(raw);
     }
 
     @Override
     public void run() {
-        HttpRequest httpRequest = httpRequestParser.parse();
         try {
-            logger.info(connection.getRemoteSocketAddress() + " " + httpRequest.info());
-            logger.info(connection.getInetAddress().getHostAddress() + " " + httpRequest.info());
+            request = httpRequestParser.parse();
+            response = new HttpResponse(connection);
 
-            if (httpRequest.isRootPath()) {
-                httpRequest.appendPath(serverConfig.index());
+            logger.info(connection.getRemoteSocketAddress() + " " + request.info());
+            logger.info(connection.getInetAddress().getHostAddress() + " " + request.info());
+
+            if (!request.isGetMethod()) {
+                throw new NotImplementedException();
             }
 
-            if (httpRequest.isGetMethod()) {
-                handleGetRequest(httpRequest);
+            if (servletConfig.isServlet(request.uri())) {
+                // do Servlet
+                SimpleServlet servlet = servletConfig.getServlet(request.uri());
+                servlet.service(null, null);
             } else {
-                handleNonGetRequest(httpRequest.version());
+                // do static
+                if (request.isRootPath()) {
+                    request.appendPath(serverConfig.index());
+                }
+                handleGetRequest(request, response);
             }
+
         } catch (IOException ex) {
             ex.printStackTrace();
             handleIOException(connection, ex);
         } catch (ForbiddenException e) {
-            handleForbidden(httpRequest);
+            response.sendError(serverConfig.getErrorPage("403"));
+        } catch (NotFoundException e) {
+            response.sendError(serverConfig.getErrorPage("404"));
+        } catch (NotImplementedException e) {
+            response.sendError(serverConfig.getErrorPage("501"));
         } finally {
             closeConnection(connection);
         }
     }
 
-    private void handleForbidden(HttpRequest httpRequest) {
-        try {
-
-            InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(serverConfig.forbidden());
-
-            byte[] theData = resourceAsStream.readAllBytes();
-
-            if (httpRequest.isHttp()) {
-                sendHeader("HTTP/1.0 403 Forbidden", "text/html; charset=utf-8", theData.length);
-            }
-
-            raw.write(theData);
-            raw.flush();
-        } catch (IOException e) {
-
-        }
-    }
-
-    private void handleGetRequest(HttpRequest httpRequest) throws IOException {
+    private void handleGetRequest(HttpRequest httpRequest, HttpResponse response) throws IOException {
+        System.out.println("serverConfig = " + serverConfig.rootDirectory());
+        System.out.println("httpRequest = " + httpRequest.uri());
         InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(serverConfig.rootDirectory() + httpRequest.uri());
 
         if (resourceAsStream == null) {
-            handleFileNotFound(httpRequest.version());
-            return;
+            throw new NotFoundException();
         }
 
         byte[] theData = resourceAsStream.readAllBytes();
         if (httpRequest.isHttp()) {
-            sendHeader("HTTP/1.0 200 OK", httpRequest.contentType(), theData.length);
+            response.setHeader("HTTP/1.0 200 OK", httpRequest.contentType(), theData.length);
         }
         sendFile(theData);
     }
@@ -88,34 +92,6 @@ public class RequestProcessor implements Runnable {
     private void sendFile(byte[] data) throws IOException {
         raw.write(data);
         raw.flush();
-    }
-
-    private void handleFileNotFound(String version) throws IOException {
-        String body = "<HTML>\r\n" +
-                "<HEAD><TITLE>File Not Found</TITLE>\r\n" +
-                "</HEAD>\r\n" +
-                "<BODY>" +
-                "<H1>HTTP Error 404: File Not Found</H1>\r\n" +
-                "</BODY></HTML>\r\n";
-        if (version.startsWith("HTTP/")) {
-            sendHeader("HTTP/1.0 404 File Not Found", "text/html; charset=utf-8", body.length());
-        }
-        out.write(body);
-        out.flush();
-    }
-
-    private void handleNonGetRequest(String version) throws IOException {
-        String body = "<HTML>\r\n" +
-                "<HEAD><TITLE>Not Implemented</TITLE>\r\n" +
-                "</HEAD>\r\n" +
-                "<BODY>" +
-                "<H1>HTTP Error 501: Not Implemented</H1>\r\n" +
-                "</BODY></HTML>\r\n";
-        if (version.startsWith("HTTP/")) {
-            sendHeader("HTTP/1.0 501 Not Implemented", "text/html; charset=utf-8", body.length());
-        }
-        out.write(body);
-        out.flush();
     }
 
     private void handleIOException(Socket connection, IOException ex) {
@@ -128,17 +104,5 @@ public class RequestProcessor implements Runnable {
         } catch (IOException ex) {
             // Ignore exception
         }
-    }
-
-
-    private void sendHeader(String responseCode, String contentType, int length)
-            throws IOException {
-        out.write(responseCode + "\r\n");
-        Date now = new Date();
-        out.write("Date: " + now + "\r\n");
-        out.write("Server: HTTP 2.0\r\n");
-        out.write("Content-length: " + length + "\r\n");
-        out.write("Content-type: " + contentType + "\r\n\r\n");
-        out.flush();
     }
 }

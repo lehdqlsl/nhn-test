@@ -3,6 +3,7 @@ package com.nhn.server.http;
 
 import com.nhn.server.config.ConfigurationManager;
 import com.nhn.server.config.ServerConfig;
+import com.nhn.server.servlet.ServletConfig;
 
 import java.io.IOException;
 import java.util.logging.Level;
@@ -16,8 +17,12 @@ public class ApplicationRunner {
 
     public static void run(Class<?> primarySource, String[] args) {
         ServerConfig serverConfig = ConfigurationManager.getServerConfig();
+        ServletConfig servletConfig = ConfigurationManager.getServletMapping();
         try {
-            HttpServer webserver = new HttpServer(serverConfig);
+            HttpServer webserver = new HttpServer(
+                    serverConfig,
+                    servletConfig
+            );
             webserver.start();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Server could not start", ex);

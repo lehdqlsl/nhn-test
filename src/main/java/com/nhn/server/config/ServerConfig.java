@@ -94,4 +94,8 @@ public class ServerConfig {
     public String forbidden(String host) {
         return rootDirectory(host) + errorPages.get("403");
     }
+
+    public String getErrorPage(String error) {
+        return rootDirectory() + errorPages.get(error);
+    }
 }

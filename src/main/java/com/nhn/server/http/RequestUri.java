@@ -31,4 +31,8 @@ public class RequestUri {
     public String toString() {
         return uri;
     }
+
+    public boolean isRoot() {
+        return uri.equals("/");
+    }
 }
